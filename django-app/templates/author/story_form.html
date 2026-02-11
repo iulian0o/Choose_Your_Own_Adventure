@@ -1,5 +1,5 @@
 {% extends 'base.html' %} {% block title %}Create Page - NAHB{% endblock %}
-{% block content %}
+{%block content %}
 <div class="card">
   <h1>Create New Page</h1>
 
@@ -25,7 +25,12 @@
 
     <div>
       <button type="submit" class="btn btn-success">Create Page</button>
+
+      {% if story_id %} {# If we are editing/adding to an existing story #}
       <a href="{% url 'story_edit' story_id %}" class="btn">Cancel</a>
+      {% else %} {# If this is a brand new story with no ID yet #}
+      <a href="{% url 'story_list' %}" class="btn">Cancel</a>
+      {% endif %}
     </div>
   </form>
 </div>
