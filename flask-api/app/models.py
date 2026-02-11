@@ -5,7 +5,9 @@ class Story(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
+    status = db.Column(db.String(20), default='published')  # draft/published/suspended
     start_page_id = db.Column(db.Integer, db.ForeignKey('page.id'))
+    illustration = db.Column(db.String(500))  # Level 18
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     pages = db.relationship('Page', backref='story', lazy=True, foreign_keys='Page.story_id')
@@ -26,14 +28,17 @@ class Page(db.Model):
     story_id = db.Column(db.Integer, db.ForeignKey('story.id'), nullable=False)
     text = db.Column(db.Text, nullable=False)
     is_ending = db.Column(db.Boolean, default=False)
+    ending_label = db.Column(db.String(100))  
+    illustration = db.Column(db.String(500))  
     
     choices = db.relationship(
         'Choice', 
         backref='page', 
         lazy=True, 
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        foreign_keys='Choice.page_id' 
     )
-    
+
     def to_dict(self, include_choices=True):
         data = {
             'id': self.id,

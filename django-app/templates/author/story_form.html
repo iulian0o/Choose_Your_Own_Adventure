@@ -1,24 +1,31 @@
-{% extends 'base.html' %} {% block title %}Create Story - NAHB{% endblock %} {%
+{% extends 'base.html' %} {% block title %}Create Page - NAHB{% endblock %} {%
 block content %}
 <div class="card">
-  <h1>Create New Story</h1>
+  <h1>Create New Page</h1>
 
   <form method="post">
     {% csrf_token %}
 
     <div>
-      <label for="title">Title:</label>
-      <input type="text" id="title" name="title" required />
+      <label for="text">Page Text:</label>
+      <textarea id="text" name="text" required></textarea>
     </div>
 
     <div>
-      <label for="description">Description:</label>
-      <textarea id="description" name="description" required></textarea>
+      <label>
+        <input type="checkbox" name="is_ending" />
+        This is an ending page
+      </label>
     </div>
 
     <div>
-      <button type="submit" class="btn btn-success">Create Story</button>
-      <a href="{% url 'author_dashboard' %}" class="btn">Cancel</a>
+      <label for="ending_label">Ending Label (if ending):</label>
+      <input type="text" id="ending_label" name="ending_label" />
+    </div>
+
+    <div>
+      <button type="submit" class="btn btn-success">Create Page</button>
+      <a href="{% url 'story_edit' story_id %}" class="btn">Cancel</a>
     </div>
   </form>
 </div>
