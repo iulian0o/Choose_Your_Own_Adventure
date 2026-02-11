@@ -24,3 +24,22 @@ class PlaySession(models.Model):
     class Meta:
         unique_together = ['session_key', 'story_id']
 
+class Rating(models.Model):
+    story_id = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    stars = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['story_id', 'user']
+
+class Report(models.Model):
+    story_id = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Report for story {self.story_id} by {self.user.username}"
