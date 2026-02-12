@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Story{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Create Complete Story</h1>
+    <p style="color: #666; margin-bottom: 2rem;">Fill in all fields to create a story with 2 pages and 2 endings</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <h2 style="margin-top: 0;">Story Info</h2>
+        <div>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        
+        <div>
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" required rows="3"></textarea>
+        </div>
+        
+        <h2 style="margin-top: 2rem;">Pages</h2>
+        
+        <div>
+            <label for="page1_text">Page 1 (Start):</label>
+            <textarea id="page1_text" name="page1_text" required rows="4" 
+                      placeholder="You wake up in a strange place..."></textarea>
+        </div>
+        
+        <div>
+            <label for="page2_text">Page 2:</label>
+            <textarea id="page2_text" name="page2_text" required rows="4"
+                      placeholder="You continue deeper into the mystery..."></textarea>
+        </div>
+        
+        <h2 style="margin-top: 2rem;">Endings</h2>
+        
+        <div>
+            <label for="ending1_text">Ending 1:</label>
+            <textarea id="ending1_text" name="ending1_text" required rows="3"
+                      placeholder="You succeed!"></textarea>
+            <label for="ending1_label">Ending 1 Label:</label>
+            <input type="text" id="ending1_label" name="ending1_label" required
+                   placeholder="e.g., Victory">
+        </div>
+        
+        <div>
+            <label for="ending2_text">Ending 2:</label>
+            <textarea id="ending2_text" name="ending2_text" required rows="3"
+                      placeholder="You fail..."></textarea>
+            <label for="ending2_label">Ending 2 Label:</label>
+            <input type="text" id="ending2_label" name="ending2_label" required
+                   placeholder="e.g., Defeat">
+        </div>
+        
+        <h2 style="margin-top: 2rem;">Choices</h2>
+        <p style="color: #666; font-size: 0.9rem;">Each page has 2 choices</p>
+        
+        <div style="background: #f0f0f0; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+            <strong>From Page 1:</strong>
+            <div style="margin-top: 0.5rem;">
+                <label for="choice1_text">Choice 1 (→ Page 2):</label>
+                <input type="text" id="choice1_text" name="choice1_text" required
+                       placeholder="e.g., Go left">
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <label for="choice2_text">Choice 2 (→ Ending 1):</label>
+                <input type="text" id="choice2_text" name="choice2_text" required
+                       placeholder="e.g., Go right">
+            </div>
+        </div>
+        
+        <div style="background: #f0f0f0; padding: 1rem; border-radius: 5px;">
+            <strong>From Page 2:</strong>
+            <div style="margin-top: 0.5rem;">
+                <label for="choice3_text">Choice 1 (→ Ending 1):</label>
+                <input type="text" id="choice3_text" name="choice3_text" required
+                       placeholder="e.g., Fight">
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <label for="choice4_text">Choice 2 (→ Ending 2):</label>
+                <input type="text" id="choice4_text" name="choice4_text" required
+                       placeholder="e.g., Run away">
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-success">Create Story</button>
+            <a href="{% url 'author_dashboard' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="background: #e7f3ff;">
+    <h3>Story Structure:</h3>
+    <pre style="background: white; padding: 1rem; border-radius: 5px;">
+Page 1
+  ├─ Choice 1 → Page 2
+  └─ Choice 2 → Ending 1
+
+Page 2
+  ├─ Choice 1 → Ending 1
+  └─ Choice 2 → Ending 2
+    </pre>
+</div>
+{% endblock %}

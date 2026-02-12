@@ -30,7 +30,7 @@ def story_list(request):
                       search_query.lower() in s.get('description', '').lower()]
     except Exception as e:
         stories = []
-        print(f"ERROR: {e}")  # DEBUG
+        print(f"ERROR: {e}")  
         messages.error(request, f"Could not connect: {e}")
     
     return render(request, 'stories/list.html', {
@@ -195,25 +195,24 @@ def author_dashboard(request):
 
     return render(request, "author/dashboard.html", {"stories": stories})
 
-
 def story_create(request):
     """Create a new story"""
     if request.method == 'POST':
         data = {
             'title': request.POST.get('title'),
             'description': request.POST.get('description'),
-            'status': request.POST.get('status', 'draft')  # Changed to draft
+            'status': 'published'
         }
         try:
             response = requests.post(f"{FLASK_API}/stories", json=data)
             if response.status_code == 201:
                 story = response.json()
-                messages.success(request, 'Story created as draft!')
+                messages.success(request, 'Story created successfully!')
                 return redirect('story_edit', story_id=story['id'])
         except:
             messages.error(request, 'Could not create story')
     
-    return render(request, 'author/story_form.html')
+    return render(request, 'author/story_form.html')  
 
 def story_edit(request, story_id):
     """Edit a story and manage pages/choices"""
@@ -283,16 +282,16 @@ def choice_create(request, page_id):
 
 def story_delete(request, story_id):
     """Delete a story"""
-    if request.method == "POST":
+    if request.method == 'POST':
         try:
-            response = requests.delete(f"{FLASK_API}/stories/{story_id}")
+            response = requests.delete(f"{FLASK_API}/stories/{story_id}", headers=get_headers())
             if response.status_code == 204:
-                messages.success(request, "Story deleted!")
-                return redirect("author_dashboard")
+                messages.success(request, 'Story deleted!')
+                return redirect('author_dashboard')
         except:
-            messages.error(request, "Could not delete story")
-
-    return redirect("author_dashboard")
+            messages.error(request, 'Could not delete story')
+    
+    return redirect('author_dashboard')
 
 def story_publish(request, story_id):
     """Publish a draft story"""
@@ -340,3 +339,45 @@ def preview_page(request, story_id, page_id):
         messages.error(request, "Could not load page")
     
     return redirect('author_dashboard')
+
+def simple_story_create(request):
+    """Simple one-page story creator"""
+    if request.method == 'POST':
+        # Create the story
+        story_data = {
+            'title': request.POST.get('title'),
+            'description': request.POST.get('description'),
+            'status': 'published'
+        }
+        
+        try:
+            story_response = requests.post(f"{FLASK_API}/stories", json=story_data, headers=get_headers())
+            story = story_response.json()
+            
+            page1_data = {'text': request.POST.get('page1_text'), 'is_ending': False}
+            page1_response = requests.post(f"{FLASK_API}/stories/{story['id']}/pages", json=page1_data, headers=get_headers())
+            page1 = page1_response.json()
+            
+            page2_data = {'text': request.POST.get('page2_text'), 'is_ending': False}
+            page2_response = requests.post(f"{FLASK_API}/stories/{story['id']}/pages", json=page2_data, headers=get_headers())
+            page2 = page2_response.json()
+            
+            ending1_data = {'text': request.POST.get('ending1_text'), 'is_ending': True, 'ending_label': request.POST.get('ending1_label')}
+            ending1_response = requests.post(f"{FLASK_API}/stories/{story['id']}/pages", json=ending1_data, headers=get_headers())
+            ending1 = ending1_response.json()
+            
+            ending2_data = {'text': request.POST.get('ending2_text'), 'is_ending': True, 'ending_label': request.POST.get('ending2_label')}
+            ending2_response = requests.post(f"{FLASK_API}/stories/{story['id']}/pages", json=ending2_data, headers=get_headers())
+            ending2 = ending2_response.json()
+            
+            requests.post(f"{FLASK_API}/pages/{page1['id']}/choices", json={'text': request.POST.get('choice1_text'), 'next_page_id': page2['id']}, headers=get_headers())
+            requests.post(f"{FLASK_API}/pages/{page1['id']}/choices", json={'text': request.POST.get('choice2_text'), 'next_page_id': ending1['id']}, headers=get_headers())
+            requests.post(f"{FLASK_API}/pages/{page2['id']}/choices", json={'text': request.POST.get('choice3_text'), 'next_page_id': ending1['id']}, headers=get_headers())
+            requests.post(f"{FLASK_API}/pages/{page2['id']}/choices", json={'text': request.POST.get('choice4_text'), 'next_page_id': ending2['id']}, headers=get_headers())
+            
+            messages.success(request, 'Story created successfully!')
+            return redirect('author_dashboard')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+    
+    return render(request, 'author/simple_create.html')
