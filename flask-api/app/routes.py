@@ -50,8 +50,7 @@ def create_story():
     story = Story(
         title=data.get('title'),
         description=data.get('description'),
-        status=data.get('status', 'published'),
-        author_id=data.get('author_id')
+        status=data.get('status', 'published')
     )
     db.session.add(story)
     db.session.commit()
