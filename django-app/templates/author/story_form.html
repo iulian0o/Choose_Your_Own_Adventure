@@ -26,9 +26,9 @@
     <div>
       <button type="submit" class="btn btn-success">Create Page</button>
 
-      {% if story_id %} {# If we are editing/adding to an existing story #}
+      {% if story_id %} 
       <a href="{% url 'story_edit' story_id %}" class="btn">Cancel</a>
-      {% else %} {# If this is a brand new story with no ID yet #}
+      {% else %} 
       <a href="{% url 'story_list' %}" class="btn">Cancel</a>
       {% endif %}
     </div>

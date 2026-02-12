@@ -4,7 +4,6 @@ from app.models import Story, Page, Choice
 
 bp = Blueprint('api', __name__)
 
-# Level 16: API Key protection (add later)
 API_KEY = "your-secret-api-key-12345"
 
 def check_api_key():
@@ -12,15 +11,18 @@ def check_api_key():
     api_key = request.headers.get('X-API-KEY')
     return api_key == API_KEY
 
-# ============ READING ENDPOINTS (PUBLIC) ============
 
-@bp.route('/stories', methods=['GET'])
+bp.route('/stories', methods=['GET'])
 def get_stories():
     """GET /stories?status=published"""
-    status = request.args.get('status', 'published')
-    stories = Story.query.filter_by(status=status).all()
+    status = request.args.get('status')
+    
+    if status:
+        stories = Story.query.filter_by(status=status).all()
+    else:
+        stories = Story.query.all()
+    
     return jsonify([s.to_dict() for s in stories])
-
 @bp.route('/stories/<int:id>', methods=['GET'])
 def get_story(id):
     """GET /stories/<id>"""
@@ -43,14 +45,10 @@ def get_page(id):
     page = Page.query.get_or_404(id)
     return jsonify(page.to_dict())
 
-# ============ WRITING ENDPOINTS (Level 16: Protected) ============
 
 @bp.route('/stories', methods=['POST'])
 def create_story():
     """POST /stories"""
-    # Level 16: Add API key check
-    # if not check_api_key():
-    #     return jsonify({'error': 'Unauthorized'}), 401
     
     data = request.json
     story = Story(
@@ -65,7 +63,6 @@ def create_story():
 @bp.route('/stories/<int:id>', methods=['PUT'])
 def update_story(id):
     """PUT /stories/<id>"""
-    # Level 16: Add API key check
     
     story = Story.query.get_or_404(id)
     data = request.json
@@ -87,7 +84,6 @@ def update_story(id):
 @bp.route('/stories/<int:id>', methods=['DELETE'])
 def delete_story(id):
     """DELETE /stories/<id>"""
-    # Level 16: Add API key check
     
     story = Story.query.get_or_404(id)
     db.session.delete(story)
@@ -97,7 +93,6 @@ def delete_story(id):
 @bp.route('/stories/<int:id>/pages', methods=['POST'])
 def create_page(id):
     """POST /stories/<id>/pages"""
-    # Level 16: Add API key check
     
     story = Story.query.get_or_404(id)
     data = request.json
@@ -112,7 +107,6 @@ def create_page(id):
     db.session.add(page)
     db.session.commit()
     
-    # If this is the first page and story has no start page, set it
     if not story.start_page_id:
         story.start_page_id = page.id
         db.session.commit()
@@ -122,7 +116,6 @@ def create_page(id):
 @bp.route('/pages/<int:id>/choices', methods=['POST'])
 def create_choice(id):
     """POST /pages/<id>/choices"""
-    # Level 16: Add API key check
     
     page = Page.query.get_or_404(id)
     data = request.json
@@ -136,7 +129,6 @@ def create_choice(id):
     db.session.commit()
     return jsonify(choice.to_dict()), 201
 
-# ============ ADDITIONAL USEFUL ENDPOINTS ============
 
 @bp.route('/pages/<int:id>', methods=['PUT'])
 def update_page(id):

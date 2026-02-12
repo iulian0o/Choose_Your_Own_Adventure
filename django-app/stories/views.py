@@ -2,8 +2,8 @@ import requests
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.contrib import messages
-from .models import Play
 from django.db.models import Count
+from .models import Play, PlaySession
 
 FLASK_API = settings.FLASK_API_URL
 
@@ -14,72 +14,131 @@ def get_headers():
 
 
 def story_list(request):
-    """List all published stories"""
+    """List all published stories with search"""
+    search_query = request.GET.get('search', '')
+    
     try:
         response = requests.get(f"{FLASK_API}/stories?status=published")
         stories = response.json() if response.status_code == 200 else []
+        
+        if search_query:
+            stories = [s for s in stories if 
+                      search_query.lower() in s['title'].lower() or 
+                      search_query.lower() in s.get('description', '').lower()]
     except:
         stories = []
         messages.error(request, "Could not connect to story database")
-
-    return render(request, "stories/list.html", {"stories": stories})
+    
+    return render(request, 'stories/list.html', {
+        'stories': stories,
+        'search_query': search_query
+    })
 
 
 def story_detail(request, story_id):
-    """View story details"""
+    """View story details with enhanced statistics"""
     try:
         response = requests.get(f"{FLASK_API}/stories/{story_id}")
         story = response.json() if response.status_code == 200 else None
     except:
         story = None
         messages.error(request, "Could not load story")
-
+    
     plays = Play.objects.filter(story_id=story_id)
     total_plays = plays.count()
-    endings_stats = plays.values("ending_page_id").annotate(
-        count=Count("ending_page_id")
-    )
-
+    
+    endings_stats = []
+    if total_plays > 0:
+        endings_data = plays.values('ending_page_id').annotate(count=Count('ending_page_id'))
+        
+        for ending in endings_data:
+            try:
+                page_response = requests.get(f"{FLASK_API}/pages/{ending['ending_page_id']}")
+                if page_response.status_code == 200:
+                    page_data = page_response.json()
+                    percentage = (ending['count'] / total_plays) * 100
+                    endings_stats.append({
+                        'page_id': ending['ending_page_id'],
+                        'label': page_data.get('ending_label', 'Unknown Ending'),
+                        'count': ending['count'],
+                        'percentage': round(percentage, 1)
+                    })
+            except:
+                pass
+    
     context = {
-        "story": story,
-        "total_plays": total_plays,
-        "endings_stats": endings_stats,
+        'story': story,
+        'total_plays': total_plays,
+        'endings_stats': endings_stats
     }
-    return render(request, "stories/detail.html", context)
-
+    return render(request, 'stories/detail.html', context)
 
 def play_story(request, story_id):
-    """Start playing a story"""
+    """Start playing a story or resume"""
+    session_key = request.session.session_key or request.session.create()
+    
     try:
-        response = requests.get(f"{FLASK_API}/stories/{story_id}/start")
-        if response.status_code == 200:
-            page = response.json()
-            return render(
-                request, "play/page.html", {"story_id": story_id, "page": page}
-            )
-    except:
-        messages.error(request, "Could not start story")
-
-    return redirect("story_list")
+        play_session = PlaySession.objects.get(
+            session_key=session_key,
+            story_id=story_id
+        )
+        return redirect('play_page', story_id=story_id, page_id=play_session.current_page_id)
+    except PlaySession.DoesNotExist:
+        try:
+            response = requests.get(f"{FLASK_API}/stories/{story_id}/start")
+            if response.status_code == 200:
+                page = response.json()
+                
+                PlaySession.objects.create(
+                    session_key=session_key,
+                    story_id=story_id,
+                    current_page_id=page['id']
+                )
+                
+                return render(request, 'play/page.html', {
+                    'story_id': story_id,
+                    'page': page
+                })
+        except:
+            messages.error(request, "Could not start story")
+    
+    return redirect('story_list')
 
 
 def play_page(request, story_id, page_id):
     """Display a specific page during play"""
+    session_key = request.session.session_key or request.session.create()
+    
     try:
         response = requests.get(f"{FLASK_API}/pages/{page_id}")
         if response.status_code == 200:
             page = response.json()
-
-            if page.get("is_ending"):
-                Play.objects.create(story_id=story_id, ending_page_id=page_id)
-
-            return render(
-                request, "play/page.html", {"story_id": story_id, "page": page}
-            )
+            
+            if not page.get('is_ending'):
+                PlaySession.objects.update_or_create(
+                    session_key=session_key,
+                    story_id=story_id,
+                    defaults={'current_page_id': page_id}
+                )
+            else:
+                PlaySession.objects.filter(
+                    session_key=session_key,
+                    story_id=story_id
+                ).delete()
+                
+                Play.objects.create(
+                    story_id=story_id,
+                    ending_page_id=page_id
+                )
+            
+            return render(request, 'play/page.html', {
+                'story_id': story_id,
+                'page': page
+            })
     except:
         messages.error(request, "Could not load page")
-
-    return redirect("story_list")
+    
+    return redirect('story_list')
 
 
 def statistics(request):
@@ -135,24 +194,22 @@ def author_dashboard(request):
 
 def story_create(request):
     """Create a new story"""
-    if request.method == "POST":
+    if request.method == 'POST':
         data = {
-            "title": request.POST.get("title"),
-            "description": request.POST.get("description"),
-            "status": "published",
+            'title': request.POST.get('title'),
+            'description': request.POST.get('description'),
+            'status': request.POST.get('status', 'draft')  # Changed to draft
         }
         try:
             response = requests.post(f"{FLASK_API}/stories", json=data)
             if response.status_code == 201:
                 story = response.json()
-                messages.success(request, "Story created successfully!")
-                return redirect("story_edit", story_id=story["id"])
-        except requests.exceptions.RequestException as e:
-            print(f"Connection error: {e}")
-            messages.error(request, "Could not connect to the story service.")
-
-    return render(request, "author/story_form.html", {"story_id": None})
-
+                messages.success(request, 'Story created as draft!')
+                return redirect('story_edit', story_id=story['id'])
+        except:
+            messages.error(request, 'Could not create story')
+    
+    return render(request, 'author/story_form.html')
 
 def story_edit(request, story_id):
     """Edit a story and manage pages/choices"""
@@ -232,3 +289,50 @@ def story_delete(request, story_id):
             messages.error(request, "Could not delete story")
 
     return redirect("author_dashboard")
+
+def story_publish(request, story_id):
+    """Publish a draft story"""
+    if request.method == 'POST':
+        try:
+            response = requests.put(
+                f"{FLASK_API}/stories/{story_id}",
+                json={'status': 'published'}
+            )
+            if response.status_code == 200:
+                messages.success(request, 'Story published!')
+        except:
+            messages.error(request, 'Could not publish story')
+    
+    return redirect('story_edit', story_id=story_id)
+
+def preview_story(request, story_id):
+    """Preview a story without recording stats"""
+    try:
+        response = requests.get(f"{FLASK_API}/stories/{story_id}/start")
+        if response.status_code == 200:
+            page = response.json()
+            return render(request, 'play/preview_page.html', {
+                'story_id': story_id,
+                'page': page,
+                'preview_mode': True
+            })
+    except:
+        messages.error(request, "Could not start preview")
+    
+    return redirect('author_dashboard')
+
+def preview_page(request, story_id, page_id):
+    """Preview a specific page"""
+    try:
+        response = requests.get(f"{FLASK_API}/pages/{page_id}")
+        if response.status_code == 200:
+            page = response.json()
+            return render(request, 'play/preview_page.html', {
+                'story_id': story_id,
+                'page': page,
+                'preview_mode': True
+            })
+    except:
+        messages.error(request, "Could not load page")
+    
+    return redirect('author_dashboard')
