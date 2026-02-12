@@ -14,20 +14,24 @@ def get_headers():
 
 
 def story_list(request):
-    """List all published stories with search"""
     search_query = request.GET.get('search', '')
     
     try:
         response = requests.get(f"{FLASK_API}/stories?status=published")
+        print(f"Flask response status: {response.status_code}")  # DEBUG
+        print(f"Flask response: {response.text}")  # DEBUG
+        
         stories = response.json() if response.status_code == 200 else []
+        print(f"Number of stories: {len(stories)}")  # DEBUG
         
         if search_query:
             stories = [s for s in stories if 
                       search_query.lower() in s['title'].lower() or 
                       search_query.lower() in s.get('description', '').lower()]
-    except:
+    except Exception as e:
         stories = []
-        messages.error(request, "Could not connect to story database")
+        print(f"ERROR: {e}")  # DEBUG
+        messages.error(request, f"Could not connect: {e}")
     
     return render(request, 'stories/list.html', {
         'stories': stories,

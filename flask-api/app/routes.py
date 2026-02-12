@@ -6,13 +6,9 @@ bp = Blueprint('api', __name__)
 
 API_KEY = "your-secret-api-key-12345"
 
-def check_api_key():
-    """Level 16: Protect write endpoints"""
-    api_key = request.headers.get('X-API-KEY')
-    return api_key == API_KEY
+# ============ READING ENDPOINTS (PUBLIC) ============
 
-
-bp.route('/stories', methods=['GET'])
+@bp.route('/stories', methods=['GET'])
 def get_stories():
     """GET /stories?status=published"""
     status = request.args.get('status')
@@ -23,48 +19,48 @@ def get_stories():
         stories = Story.query.all()
     
     return jsonify([s.to_dict() for s in stories])
-@bp.route('/stories/<int:id>', methods=['GET'])
-def get_story(id):
+
+@bp.route('/stories/<int:story_id>', methods=['GET'])
+def get_story(story_id):
     """GET /stories/<id>"""
-    story = Story.query.get_or_404(id)
+    story = Story.query.get_or_404(story_id)
     return jsonify(story.to_dict())
 
-@bp.route('/stories/<int:id>/start', methods=['GET'])
-def get_story_start(id):
+@bp.route('/stories/<int:story_id>/start', methods=['GET'])
+def get_story_start(story_id):
     """GET /stories/<id>/start"""
-    story = Story.query.get_or_404(id)
+    story = Story.query.get_or_404(story_id)
     if not story.start_page_id:
         return jsonify({'error': 'Story has no start page'}), 400
-    
     start_page = Page.query.get(story.start_page_id)
     return jsonify(start_page.to_dict())
 
-@bp.route('/pages/<int:id>', methods=['GET'])
-def get_page(id):
-    """GET /pages/<id> → returns page text + choices"""
-    page = Page.query.get_or_404(id)
+@bp.route('/pages/<int:page_id>', methods=['GET'])
+def get_page(page_id):
+    """GET /pages/<id>"""
+    page = Page.query.get_or_404(page_id)
     return jsonify(page.to_dict())
 
+# ============ WRITING ENDPOINTS ============
 
 @bp.route('/stories', methods=['POST'])
 def create_story():
     """POST /stories"""
-    
     data = request.json
     story = Story(
         title=data.get('title'),
         description=data.get('description'),
-        status=data.get('status', 'published')
+        status=data.get('status', 'published'),
+        author_id=data.get('author_id')
     )
     db.session.add(story)
     db.session.commit()
     return jsonify(story.to_dict()), 201
 
-@bp.route('/stories/<int:id>', methods=['PUT'])
-def update_story(id):
+@bp.route('/stories/<int:story_id>', methods=['PUT'])
+def update_story(story_id):
     """PUT /stories/<id>"""
-    
-    story = Story.query.get_or_404(id)
+    story = Story.query.get_or_404(story_id)
     data = request.json
     
     if 'title' in data:
@@ -81,24 +77,22 @@ def update_story(id):
     db.session.commit()
     return jsonify(story.to_dict())
 
-@bp.route('/stories/<int:id>', methods=['DELETE'])
-def delete_story(id):
+@bp.route('/stories/<int:story_id>', methods=['DELETE'])
+def delete_story(story_id):
     """DELETE /stories/<id>"""
-    
-    story = Story.query.get_or_404(id)
+    story = Story.query.get_or_404(story_id)
     db.session.delete(story)
     db.session.commit()
     return '', 204
 
-@bp.route('/stories/<int:id>/pages', methods=['POST'])
-def create_page(id):
+@bp.route('/stories/<int:story_id>/pages', methods=['POST'])
+def create_page(story_id):
     """POST /stories/<id>/pages"""
-    
-    story = Story.query.get_or_404(id)
+    story = Story.query.get_or_404(story_id)
     data = request.json
     
     page = Page(
-        story_id=id,
+        story_id=story_id,
         text=data.get('text'),
         is_ending=data.get('is_ending', False),
         ending_label=data.get('ending_label'),
@@ -113,15 +107,14 @@ def create_page(id):
     
     return jsonify(page.to_dict()), 201
 
-@bp.route('/pages/<int:id>/choices', methods=['POST'])
-def create_choice(id):
+@bp.route('/pages/<int:page_id>/choices', methods=['POST'])
+def create_choice(page_id):
     """POST /pages/<id>/choices"""
-    
-    page = Page.query.get_or_404(id)
+    page = Page.query.get_or_404(page_id)
     data = request.json
     
     choice = Choice(
-        page_id=id,
+        page_id=page_id,
         text=data.get('text'),
         next_page_id=data.get('next_page_id')
     )
@@ -129,11 +122,10 @@ def create_choice(id):
     db.session.commit()
     return jsonify(choice.to_dict()), 201
 
-
-@bp.route('/pages/<int:id>', methods=['PUT'])
-def update_page(id):
-    """Update a page"""
-    page = Page.query.get_or_404(id)
+@bp.route('/pages/<int:page_id>', methods=['PUT'])
+def update_page(page_id):
+    """PUT /pages/<id>"""
+    page = Page.query.get_or_404(page_id)
     data = request.json
     
     if 'text' in data:
@@ -148,18 +140,18 @@ def update_page(id):
     db.session.commit()
     return jsonify(page.to_dict())
 
-@bp.route('/pages/<int:id>', methods=['DELETE'])
-def delete_page(id):
-    """Delete a page"""
-    page = Page.query.get_or_404(id)
+@bp.route('/pages/<int:page_id>', methods=['DELETE'])
+def delete_page(page_id):
+    """DELETE /pages/<id>"""
+    page = Page.query.get_or_404(page_id)
     db.session.delete(page)
     db.session.commit()
     return '', 204
 
-@bp.route('/choices/<int:id>', methods=['DELETE'])
-def delete_choice(id):
-    """Delete a choice"""
-    choice = Choice.query.get_or_404(id)
+@bp.route('/choices/<int:choice_id>', methods=['DELETE'])
+def delete_choice(choice_id):
+    """DELETE /choices/<id>"""
+    choice = Choice.query.get_or_404(choice_id)
     db.session.delete(choice)
     db.session.commit()
     return '', 204
