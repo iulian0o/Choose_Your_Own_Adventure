@@ -121,38 +121,48 @@ Activate the environment:
 
 Windows
 
+```
 .\venv\Scripts\activate
-
+```
 
 Mac/Linux
 
+```
 source venv/bin/activate
-
+```
 
 Install dependencies:
 
+```
 pip install -r requirements.txt
-
+```
 
 Run Flask:
 
+```
 python run.py
-
+```
 
 Flask runs at:
 
+```
 http://127.0.0.1:5000
+```
 
 Part B: Start Django App
+
+```
 cd django-app
 python -m venv venv
-
+```
 
 Activate environment (same as above).
 
 Install dependencies:
 
+```
 pip install -r requirements.txt
+```
 
 Configure API Connection
 
@@ -160,26 +170,34 @@ Since Docker networking is not used:
 
 Windows (PowerShell)
 
+```
 $env:FLASK_API_URL = "http://127.0.0.1:5000"
-
+```
 
 Windows (CMD)
 
+```
 set FLASK_API_URL=http://127.0.0.1:5000
-
+```
 
 Mac/Linux
 
+```
 export FLASK_API_URL=http://127.0.0.1:5000
+```
 
 Run Django
+
+```
 python manage.py migrate
 python manage.py runserver
-
+```
 
 Django runs at:
 
+```
 http://127.0.0.1:8000
+```
 
 How It Works
 Django Frontend
@@ -206,3 +224,4 @@ Data Storage
 Service	Responsibility
 Django	Users & Progress
 Flask	Story Content & Logic
+
