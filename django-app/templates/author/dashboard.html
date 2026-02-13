@@ -12,8 +12,9 @@
     <div class="story-card">
         <h3>{{ story.title }}</h3>
         <p>{{ story.description }}</p>
-        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
             <a href="{% url 'play_story' story.id %}" class="btn">Preview</a>
+            <a href="{% url 'story_edit' story.id %}" class="btn">Edit</a>
             <form method="post" action="{% url 'story_delete' story.id %}" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger" 

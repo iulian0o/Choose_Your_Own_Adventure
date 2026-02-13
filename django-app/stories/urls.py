@@ -22,4 +22,5 @@ urlpatterns = [
     path('author/', views.author_dashboard, name='author_dashboard'),
     path('author/story/create/', views.simple_story_create, name='story_create'),
     path('author/story/<int:story_id>/delete/', views.story_delete, name='story_delete'),
+    path('author/story/<int:story_id>/edit/', views.story_edit, name='story_edit'),
 ]

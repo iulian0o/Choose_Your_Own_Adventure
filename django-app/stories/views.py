@@ -247,33 +247,33 @@ def story_create(request):
 
 @login_required
 def story_edit(request, story_id):
-    """Edit a story and manage pages/choices"""
+    """Edit an existing story"""
     try:
         response = requests.get(f"{FLASK_API}/stories/{story_id}")
-        story = response.json() if response.status_code == 200 else None
-
-        if not story:
-            messages.error(request, "Story not found")
-            return redirect("author_dashboard")
-
+        if response.status_code != 200:
+            messages.error(request, 'Story not found')
+            return redirect('author_dashboard')
+        story = response.json()
     except:
-        messages.error(request, "Could not load story")
-        return redirect("author_dashboard")
-
-    if request.method == "POST":
+        messages.error(request, 'Could not load story')
+        return redirect('author_dashboard')
+    
+    if request.method == 'POST':
         data = {
-            "title": request.POST.get("title"),
-            "description": request.POST.get("description"),
+            'title': request.POST.get('title'),
+            'description': request.POST.get('description')
         }
         try:
-            response = requests.put(f"{FLASK_API}/stories/{story_id}", json=data)
+            response = requests.put(f"{FLASK_API}/stories/{story_id}", json=data, headers=get_headers())
             if response.status_code == 200:
-                messages.success(request, "Story updated!")
-                return redirect("story_edit", story_id=story_id)
+                messages.success(request, 'Story updated successfully!')
+                return redirect('author_dashboard')
+            else:
+                messages.error(request, 'Failed to update story')
         except:
-            messages.error(request, "Could not update story")
-
-    return render(request, "author/story_edit.html", {"story": story})
+            messages.error(request, 'Error updating story')
+    
+    return render(request, 'author/story_edit.html', {'story': story})
 
 
 def page_create(request, story_id):

@@ -1,11 +1,11 @@
 {% load static %}
+{% load compress %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}NAHB - Not Another Hero's Book{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% compress css %}
+    <link rel="stylesheet" type="text/x-scss" href="{% static 'scss/style.scss' %}">
+    {% endcompress %}
 </head>
 <body>
     <nav>
@@ -13,7 +13,7 @@
             <li><a href="{% url 'story_list' %}">Stories</a></li>
             <li><a href="{% url 'statistics' %}">Statistics</a></li>
             {% if user.is_authenticated %}
-                <li><a href="{% url 'author_dashboard' %}">Author Dashboard</a></li>
+                <li><a href="{% url 'author_dashboard' %}">Dashboard</a></li>
                 <li><a href="{% url 'logout' %}">Logout ({{ user.username }})</a></li>
             {% else %}
                 <li><a href="{% url 'login' %}">Login</a></li>
