@@ -4,8 +4,10 @@ from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count
 from .models import Play, PlaySession
-from django.contrib.auth import logout as auth_logout
+from django.contrib.auth import logout as auth_logout, login
 from django.contrib.auth.decorators import login_required
+from .forms import RegisterForm
+
 
 FLASK_API = settings.FLASK_API_URL
 
@@ -14,7 +16,7 @@ def get_headers():
     """Level 16: Include API key for write operations"""
     return {"X-API-KEY": settings.FLASK_API_KEY}
 
-
+@login_required
 def story_list(request):
     search_query = request.GET.get('search', '')
     
@@ -40,7 +42,7 @@ def story_list(request):
         'search_query': search_query
     })
 
-
+@login_required
 def story_detail(request, story_id):
     """View story details with enhanced statistics"""
     try:
@@ -79,6 +81,7 @@ def story_detail(request, story_id):
     }
     return render(request, 'stories/detail.html', context)
 
+@login_required
 def play_story(request, story_id):
     """Start playing a story or resume"""
     session_key = request.session.session_key or request.session.create()
@@ -110,7 +113,7 @@ def play_story(request, story_id):
     
     return redirect('story_list')
 
-
+@login_required
 def play_page(request, story_id, page_id):
     """Display a specific page during play"""
     session_key = request.session.session_key or request.session.create()
@@ -146,7 +149,7 @@ def play_page(request, story_id, page_id):
     
     return redirect('story_list')
 
-
+@login_required
 def statistics(request):
     """Show statistics for all stories"""
     story_stats = (
@@ -186,7 +189,7 @@ def statistics(request):
 
     return render(request, "stories/statistics.html", {"stories": stories_data})
 
-
+@login_required
 def author_dashboard(request):
     """Author dashboard - list all stories"""
     try:
@@ -216,6 +219,8 @@ def story_create(request):
     
     return render(request, 'author/story_form.html')  
 
+
+@login_required
 def story_edit(request, story_id):
     """Edit a story and manage pages/choices"""
     try:
@@ -404,8 +409,24 @@ def simple_story_create(request):
 def story_delete(request, story_id):
     """Delete story - requires login"""
 
+def register(request):
+    """User registration - public"""
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, f'Welcome {user.username}! Your account has been created.')
+            return redirect('story_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = RegisterForm()
+    
+    return render(request, 'registration/register.html', {'form': form})
+
 def user_logout(request):
     """Logout user"""
     auth_logout(request)
     messages.success(request, 'Logged out successfully!')
-    return redirect('story_list')
+    return redirect('login')

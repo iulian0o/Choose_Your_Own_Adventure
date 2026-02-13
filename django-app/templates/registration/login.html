@@ -5,13 +5,14 @@
 {% block content %}
 <div class="card" style="max-width: 500px; margin: 0 auto;">
     <h1>Login</h1>
+    <p style="color: #666; margin-bottom: 2rem;">Login to create and manage stories</p>
     
     <form method="post">
         {% csrf_token %}
         
         {% if form.errors %}
         <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
-            Invalid username or password.
+            Invalid username or password. Please try again.
         </div>
         {% endif %}
         
@@ -30,5 +31,9 @@
             <a href="{% url 'story_list' %}" class="btn">Cancel</a>
         </div>
     </form>
+    
+    <div style="margin-top: 2rem; text-align: center; padding-top: 1rem; border-top: 1px solid #ddd;">
+        <p>Don't have an account? <a href="{% url 'register' %}" style="color: #3498db; text-decoration: none;">Register here</a></p>
+    </div>
 </div>
 {% endblock %}
