@@ -1,185 +1,208 @@
-Choose Your Own Adventure
-This project is a dual-service web application that creates an interactive "Choose Your Own Adventure" story platform. It consists of a Django frontend that manages user interaction and a Flask API backend that serves story logic and data.
+# Choose Your Own Adventure
 
-Project Structure
-django-app/: The frontend web application (Django). Contains the UI, user authentication, and story rendering logic.
+A dual-service web application that delivers an interactive **Choose Your Own Adventure** storytelling experience.
 
-flask-api/: The backend API (Flask). Manages the story nodes, logic, and database state.
+This project follows a **microservices architecture**, separating the user interface from the story engine:
 
-Prerequisites
-Docker & Docker Compose (Recommended for Method 1)
+- **Django Frontend** → Handles UI, authentication, and story rendering  
+- **Flask API Backend** → Handles story logic, nodes, and transitions
 
-Python 3.12+ (Required for Method 2)
+---
 
-Git
+## Architecture Overview
 
-Method 1: Run with Docker (Recommended)
-This is the simplest method. It ensures both services run in an isolated environment with the correct networking and dependencies configured automatically.
+- **Django** manages:
+  - User accounts
+  - Session state
+  - Story presentation
 
-Open a terminal in the project root directory (where docker-compose.yml is located).
+- **Flask** acts as:
+  - The game engine
+  - Story logic handler
+  - Story content provider
 
-Build and start the services:
+---
 
-Bash
+## Project Structure
+
+```
+Choose_Your_Own_Adventure/
+│
+├── docker-compose.yml # Runs both services together
+├── README.md
+│
+├── django-app/ # FRONTEND (Django)
+│ ├── Dockerfile
+│ ├── manage.py
+│ ├── requirements.txt
+│ ├── db.sqlite3 # User database (ignored in Git)
+│ │
+│ ├── nahb/ # Project configuration
+│ │ ├── settings.py
+│ │ ├── urls.py
+│ │ └── wsgi.py
+│ │
+│ ├── stories/ # Application logic
+│ │ ├── models.py
+│ │ ├── views.py
+│ │ └── urls.py
+│ │
+│ └── templates/
+│ ├── registration/
+│ └── stories/
+│
+└── flask-api/ # BACKEND (Flask)
+├── Dockerfile
+├── run.py
+├── requirements.txt
+│
+├── app/
+│ ├── init.py
+│ ├── models.py
+│ └── routes.py
+│
+└── instance/
+└── flask-db.sqlite # Story database
+```
+
+---
+
+## Prerequisites
+
+### Recommended (Docker Method)
+
+- Docker  
+- Docker Compose  
+
+### Manual Setup
+
+- Python **3.12+**
+- Git
+
+---
+
+# Running the Application
+
+---
+
+## Method 1: Docker (Recommended)
+
+This method ensures consistent dependencies and networking.
+
+### 1. Start Services
+
+From the project root:
+
+```bash
 docker-compose up --build
-Wait for the logs. You should see success messages indicating both the Flask API and Django development server have started.
 
-Access the application:
+2. Access the Application
 
-Frontend (Django): http://localhost:8000
+Frontend (Django):
+http://localhost:8000
 
-Backend API (Flask): http://localhost:5000
+Backend API (Flask):
+http://localhost:5000
+```
 
-Stop the application:
-Press Ctrl + C in the terminal, or run:
-
-Bash
+3. Stop Services
 docker-compose down
-Method 2: Manual Installation (Local)
-If you cannot use Docker, you must run the Flask API and the Django app in two separate terminals.
 
-Part A: Start the Flask API
-Open a new terminal and navigate to the flask directory:
+Method 2: Manual Installation
 
-Bash
+Run Django and Flask in separate terminals.
+
+Part A: Start Flask API
 cd flask-api
-Create a virtual environment:
-
-Bash
 python -m venv venv
-Activate the virtual environment:
 
-Windows: .\venv\Scripts\activate
 
-Mac/Linux: source venv/bin/activate
+Activate the environment:
+
+Windows
+
+.\venv\Scripts\activate
+
+
+Mac/Linux
+
+source venv/bin/activate
+
 
 Install dependencies:
 
-Bash
 pip install -r requirements.txt
-Run the Flask application:
 
-Bash
+
+Run Flask:
+
 python run.py
-The API will start at http://127.0.0.1:5000
 
-Part B: Start the Django App
-Open a second terminal and navigate to the django directory:
 
-Bash
+Flask runs at:
+
+http://127.0.0.1:5000
+
+Part B: Start Django App
 cd django-app
-Create a virtual environment:
-
-Bash
 python -m venv venv
-Activate the virtual environment:
 
-Windows: .\venv\Scripts\activate
 
-Mac/Linux: source venv/bin/activate
+Activate environment (same as above).
 
 Install dependencies:
 
-Bash
 pip install -r requirements.txt
-Important: Configure the API connection.
-Since you are running locally (not in Docker), Django needs to know Flask is at localhost, not flask-api. Set the environment variable before running the server.
 
-Windows (PowerShell):
+Configure API Connection
 
-PowerShell
+Since Docker networking is not used:
+
+Windows (PowerShell)
+
 $env:FLASK_API_URL = "http://127.0.0.1:5000"
-Windows (CMD):
 
-DOS
+
+Windows (CMD)
+
 set FLASK_API_URL=http://127.0.0.1:5000
-Mac/Linux:
 
-Bash
+
+Mac/Linux
+
 export FLASK_API_URL=http://127.0.0.1:5000
-Run database migrations:
 
-Bash
+Run Django
 python manage.py migrate
-Start the Django server:
-
-Bash
 python manage.py runserver
-Access the application at http://127.0.0.1:8000.
 
-Troubleshooting
-Docker Issues
-If the build fails with "No matching distribution found for Django," ensure your Dockerfile is using FROM python:3.12-slim.
 
-If you see "connection refused" errors between Django and Flask, ensure you are not using localhost inside the docker-compose.yml. The Django environment variable must be set to FLASK_API_URL=http://flask-api:5000.
+Django runs at:
 
-Manual Run Issues
-If Django cannot connect to Flask, ensure the Flask terminal is still running and that you set the $env:FLASK_API_URL correctly in the Django terminal before starting the server.
+http://127.0.0.1:8000
 
 How It Works
-This application uses a microservices architecture to separate the user interface from the game logic:
+Django Frontend
 
-The Frontend (Django):
+Displays story text and choices
 
-Handles all user interactions, displaying the story text and choices.
+Manages authentication
 
-Manages user authentication (login/signup) and session state.
+Sends user decisions to Flask API
 
-When a user makes a choice, Django sends an HTTP request to the Flask API.
+Flask API
 
-The Backend API (Flask):
+Receives story node requests
 
-Acts as the game engine.
+Determines next node
 
-Receives the current story node ID from Django.
+Returns story data as JSON
 
-Retrieves the next part of the story and available choices from its internal database.
+Example Flow:
 
-Returns this data as JSON back to Django.
+User Choice → Django View → Flask API → JSON Response → Rendered Page
 
-Data Storage:
-
-Django: Stores user accounts and progress.
-
-Flask: Stores the static story content (nodes, text, and transitions).
-
-Project Structure
-This directory tree highlights the key files and their purposes based on your current setup.
-
-Plaintext
-Choose_Your_Own_Adventure/
-├── docker-compose.yml       # Defines how to run both apps together
-├── README.md                # Project documentation
-│
-├── django-app/              # FRONTEND: User Interface & Auth
-│   ├── Dockerfile           # Instructions to build the Django image
-│   ├── manage.py            # Django command-line utility
-│   ├── requirements.txt     # Python dependencies for Django
-│   ├── db.sqlite3           # User database (ignorable in git)
-│   │
-│   ├── nahb/                # Main Project Settings
-│   │   ├── settings.py      # Config (Apps, Middleware, Database)
-│   │   ├── urls.py          # Main URL routing
-│   │   └── wsgi.py          # Entry point for web servers
-│   │
-│   ├── stories/             # App Logic
-│   │   ├── models.py        # Database models for user progress
-│   │   ├── views.py         # Handles requests and talks to Flask API
-│   │   └── urls.py          # URL routing for story pages
-│   │
-│   └── templates/           # HTML Files
-│       ├── registration/    # Login/Signup templates
-│       └── stories/         # Game interface templates
-│
-└── flask-api/               # BACKEND: Game Logic API
-    ├── Dockerfile           # Instructions to build the Flask image
-    ├── run.py               # Entry point to start the Flask server
-    ├── requirements.txt     # Python dependencies for Flask
-    │
-    ├── app/                 # Application Package
-    │   ├── __init__.py      # Initializes the app and DB connection
-    │   ├── models.py        # Database models for Story Nodes
-    │   └── routes.py        # API endpoints (e.g., /get-story/<id>)
-    │
-    └── instance/            # Instance-specific files
-        └── flask-db.sqlite  # Story content database
+Data Storage
+Service	Responsibility
+Django	Users & Progress
+Flask	Story Content & Logic
