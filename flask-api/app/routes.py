@@ -80,8 +80,12 @@ def update_story(story_id):
 def delete_story(story_id):
     """DELETE /stories/<id>"""
     story = Story.query.get_or_404(story_id)
+    
+    Page.query.filter_by(story_id=story_id).delete()
+    
     db.session.delete(story)
     db.session.commit()
+    
     return '', 204
 
 @bp.route('/stories/<int:story_id>/pages', methods=['POST'])

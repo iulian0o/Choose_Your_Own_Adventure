@@ -284,12 +284,13 @@ def story_delete(request, story_id):
     """Delete a story"""
     if request.method == 'POST':
         try:
-            response = requests.delete(f"{FLASK_API}/stories/{story_id}", headers=get_headers())
+            response = requests.delete(f"{FLASK_API}/stories/{story_id}")
             if response.status_code == 204:
                 messages.success(request, 'Story deleted!')
-                return redirect('author_dashboard')
-        except:
-            messages.error(request, 'Could not delete story')
+            else:
+                messages.error(request, f'Delete failed: {response.status_code}')
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
     
     return redirect('author_dashboard')
 
