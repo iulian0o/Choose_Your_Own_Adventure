@@ -95,9 +95,11 @@ From the project root:
 
 ```bash
 docker-compose up --build
+```
 
 2. Access the Application
 
+```
 Frontend (Django):
 http://localhost:8000
 
@@ -105,29 +107,31 @@ Backend API (Flask):
 http://localhost:5000
 ```
 
+```
 3. Stop Services
 docker-compose down
+```
 
 Method 2: Manual Installation
 
 Run Django and Flask in separate terminals.
-
+```bash
 Part A: Start Flask API
 cd flask-api
 python -m venv venv
-
+```
 
 Activate the environment:
 
-Windows
 
-```
+
+```Windows
 .\venv\Scripts\activate
 ```
 
-Mac/Linux
 
-```
+
+```Mac/Linux
 source venv/bin/activate
 ```
 
@@ -224,4 +228,5 @@ Data Storage
 Service	Responsibility
 Django	Users & Progress
 Flask	Story Content & Logic
+
 
