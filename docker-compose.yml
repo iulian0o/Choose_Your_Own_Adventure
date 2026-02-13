@@ -1,0 +1,29 @@
+services:
+  flask-api:
+    build:
+      context: ./flask-api
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./flask-api:/app
+      - flask-db:/app/instance
+    environment:
+      - FLASK_ENV=development
+
+  django-app:
+    build:
+      context: ./django-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./django-app:/app
+    environment:
+      - FLASK_API_URL=http://flask-api:5000
+    depends_on:
+      - flask-api
+    command: >
+        sh -c "python manage.py migrate && 
+              python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  flask-db:
