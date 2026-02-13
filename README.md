@@ -206,13 +206,13 @@ http://127.0.0.1:8000
 How It Works
 Django Frontend
 
-Displays story text and choices
+## Displays story text and choices
 
 Manages authentication
 
 Sends user decisions to Flask API
 
-Flask API
+## Flask API
 
 Receives story node requests
 
@@ -222,11 +222,12 @@ Returns story data as JSON
 
 Example Flow:
 
-User Choice → Django View → Flask API → JSON Response → Rendered Page
+## User Choice → Django View → Flask API → JSON Response → Rendered Page
 
 Data Storage
 Service	Responsibility
 Django	Users & Progress
 Flask	Story Content & Logic
+
 
 
