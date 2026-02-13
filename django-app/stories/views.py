@@ -3,10 +3,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count
-from .models import Play, PlaySession
+from .models import Play, PlaySession, Rating
 from django.contrib.auth import logout as auth_logout, login
 from django.contrib.auth.decorators import login_required
 from .forms import RegisterForm
+from django.db import models
 
 
 FLASK_API = settings.FLASK_API_URL
@@ -18,15 +19,19 @@ def get_headers():
 
 @login_required
 def story_list(request):
+    """List all published stories with ratings"""
     search_query = request.GET.get('search', '')
     
     try:
         response = requests.get(f"{FLASK_API}/stories?status=published")
-        print(f"Flask response status: {response.status_code}")  # DEBUG
-        print(f"Flask response: {response.text}")  # DEBUG
-        
         stories = response.json() if response.status_code == 200 else []
-        print(f"Number of stories: {len(stories)}")  # DEBUG
+        
+        for story in stories:
+            ratings = Rating.objects.filter(story_id=story['id'])
+            if ratings.exists():
+                story['avg_rating'] = round(ratings.aggregate(models.Avg('stars'))['stars__avg'], 1)
+            else:
+                story['avg_rating'] = None
         
         if search_query:
             stories = [s for s in stories if 
@@ -34,8 +39,7 @@ def story_list(request):
                       search_query.lower() in s.get('description', '').lower()]
     except Exception as e:
         stories = []
-        print(f"ERROR: {e}")  
-        messages.error(request, f"Could not connect: {e}")
+        messages.error(request, f"Could not connect to story database")
     
     return render(request, 'stories/list.html', {
         'stories': stories,
@@ -44,7 +48,7 @@ def story_list(request):
 
 @login_required
 def story_detail(request, story_id):
-    """View story details with enhanced statistics"""
+    """View story details with ratings"""
     try:
         response = requests.get(f"{FLASK_API}/stories/{story_id}")
         story = response.json() if response.status_code == 200 else None
@@ -54,32 +58,53 @@ def story_detail(request, story_id):
     
     plays = Play.objects.filter(story_id=story_id)
     total_plays = plays.count()
+    endings_stats = plays.values('ending_page_id').annotate(count=Count('ending_page_id'))
     
-    endings_stats = []
-    if total_plays > 0:
-        endings_data = plays.values('ending_page_id').annotate(count=Count('ending_page_id'))
-        
-        for ending in endings_data:
-            try:
-                page_response = requests.get(f"{FLASK_API}/pages/{ending['ending_page_id']}")
-                if page_response.status_code == 200:
-                    page_data = page_response.json()
-                    percentage = (ending['count'] / total_plays) * 100
-                    endings_stats.append({
-                        'page_id': ending['ending_page_id'],
-                        'label': page_data.get('ending_label', 'Unknown Ending'),
-                        'count': ending['count'],
-                        'percentage': round(percentage, 1)
-                    })
-            except:
-                pass
+    ratings = Rating.objects.filter(story_id=story_id).order_by('-created_at')
+    user_rating = Rating.objects.filter(story_id=story_id, user=request.user).first()
+    
+    if ratings.exists():
+        avg_rating = ratings.aggregate(models.Avg('stars'))['stars__avg']
+        avg_rating = round(avg_rating, 1)
+    else:
+        avg_rating = None
     
     context = {
         'story': story,
         'total_plays': total_plays,
-        'endings_stats': endings_stats
+        'endings_stats': endings_stats,
+        'ratings': ratings,
+        'user_rating': user_rating,
+        'avg_rating': avg_rating,
+        'total_ratings': ratings.count()
     }
     return render(request, 'stories/detail.html', context)
+
+@login_required
+def rate_story(request, story_id):
+    """Rate a story"""
+    if request.method == 'POST':
+        stars = request.POST.get('stars')
+        comment = request.POST.get('comment', '')
+        
+        try:
+            stars = int(stars)
+            if 1 <= stars <= 5:
+                rating, created = Rating.objects.update_or_create(
+                    story_id=story_id,
+                    user=request.user,
+                    defaults={'stars': stars, 'comment': comment}
+                )
+                if created:
+                    messages.success(request, 'Rating submitted!')
+                else:
+                    messages.success(request, 'Rating updated!')
+            else:
+                messages.error(request, 'Invalid rating value')
+        except:
+            messages.error(request, 'Error submitting rating')
+    
+    return redirect('story_detail', story_id=story_id)
 
 @login_required
 def play_story(request, story_id):

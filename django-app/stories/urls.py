@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.story_list, name='story_list'),
     path('story/<int:story_id>/', views.story_detail, name='story_detail'),
     path('statistics/', views.statistics, name='statistics'),
+    path('story/<int:story_id>/rate/', views.rate_story, name='rate_story'),
     
     # Playing
     path('play/<int:story_id>/', views.play_story, name='play_story'),
