@@ -186,7 +186,12 @@
       <ul>
         <li><a href="{% url 'story_list' %}">Stories</a></li>
         <li><a href="{% url 'statistics' %}">Statistics</a></li>
-        <li><a href="{% url 'author_dashboard' %}">Author Dashboard</a></li>
+        {% if user.is_authenticated %}
+            <li><a href="{% url 'author_dashboard' %}">Author Dashboard</a></li>
+            <li><a href="{% url 'logout' %}">Logout ({{ user.username }})</a></li>
+        {% else %}
+            <li><a href="{% url 'login' %}">Login</a></li>
+        {% endif %}
       </ul>
     </nav>
 

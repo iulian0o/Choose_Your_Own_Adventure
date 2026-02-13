@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.db.models import Count
 from .models import Play, PlaySession
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
 
 FLASK_API = settings.FLASK_API_URL
 
@@ -382,3 +384,28 @@ def simple_story_create(request):
             messages.error(request, f'Error: {str(e)}')
     
     return render(request, 'author/simple_create.html')
+
+@login_required
+def author_dashboard(request):
+    """Author dashboard - requires login"""
+    try:
+        response = requests.get(f"{FLASK_API}/stories")
+        stories = response.json() if response.status_code == 200 else []
+    except:
+        stories = []
+    
+    return render(request, 'author/dashboard.html', {'stories': stories})
+
+@login_required
+def simple_story_create(request):
+    """Simple story creator - requires login"""
+
+@login_required
+def story_delete(request, story_id):
+    """Delete story - requires login"""
+
+def user_logout(request):
+    """Logout user"""
+    auth_logout(request)
+    messages.success(request, 'Logged out successfully!')
+    return redirect('story_list')

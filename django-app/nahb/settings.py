@@ -120,3 +120,7 @@ STATIC_URL = 'static/'
 
 FLASK_API_URL = 'http://localhost:5000'
 FLASK_API_KEY = 'your-secret-api-key-12345'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/author/'
+LOGOUT_REDIRECT_URL = '/'

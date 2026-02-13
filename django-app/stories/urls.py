@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -11,13 +12,12 @@ urlpatterns = [
     path('play/<int:story_id>/', views.play_story, name='play_story'),
     path('play/<int:story_id>/page/<int:page_id>/', views.play_page, name='play_page'),
     
-    # Author tools
-    path('author/', views.author_dashboard, name='author_dashboard'),
-    path('author/story/<int:story_id>/edit/', views.story_edit, name='story_edit'),
-    path('author/story/<int:story_id>/delete/', views.story_delete, name='story_delete'),
-    path('author/story/<int:story_id>/page/create/', views.page_create, name='page_create'),
-    path('author/page/<int:page_id>/choice/create/', views.choice_create, name='choice_create'),
-    path('author/story/<int:story_id>/publish/', views.story_publish, name='story_publish'),
-    path('author/story/create/', views.simple_story_create, name='story_create'),
+    # Authentication
+    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', views.user_logout, name='logout'),
     
+    # Author tools (login required)
+    path('author/', views.author_dashboard, name='author_dashboard'),
+    path('author/story/create/', views.simple_story_create, name='story_create'),
+    path('author/story/<int:story_id>/delete/', views.story_delete, name='story_delete'),
 ]
