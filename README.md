@@ -79,7 +79,7 @@ Choose_Your_Own_Adventure/
 - Docker Compose
 
 ### Manual Setup
-- Python 3.8+
+- Python 3.14+
 - Git
 
 ## Running the Application
@@ -333,5 +333,6 @@ This project is created for educational purposes as part of a university course 
 ```
 https://github.com/Tailus-UI/astro-theme 
 ```
+
 
 
